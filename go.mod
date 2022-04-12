@@ -1,4 +1,4 @@
-module github.com/jjavaruski/xls
+module github.com/jjavar1/xls
 
 go 1.18
 
