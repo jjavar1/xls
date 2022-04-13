@@ -8,6 +8,21 @@ import (
 const MJD_0 float64 = 2400000.5
 const MJD_JD2000 float64 = 51544.5
 
+const (
+	nanosInADay    = float64((24 * time.Hour) / time.Nanosecond)
+	dayNanoseconds = 24 * time.Hour
+	maxDuration    = 290 * 364 * dayNanoseconds
+	roundEpsilon   = 1e-9
+)
+
+var (
+	daysInMonth           = []int{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+	excel1900Epoc         = time.Date(1899, time.December, 30, 0, 0, 0, 0, time.UTC)
+	excel1904Epoc         = time.Date(1904, time.January, 1, 0, 0, 0, 0, time.UTC)
+	excelMinTime1900      = time.Date(1899, time.December, 31, 0, 0, 0, 0, time.UTC)
+	excelBuggyPeriodStart = time.Date(1900, time.March, 1, 0, 0, 0, 0, time.UTC).Add(-time.Nanosecond)
+)
+
 func shiftJulianToNoon(julianDays, julianFraction float64) (float64, float64) {
 	switch {
 	case -0.5 < julianFraction && julianFraction < 0.5:
@@ -68,31 +83,31 @@ func doTheFliegelAndVanFlandernAlgorithm(jd int) (day, month, year int) {
 	return d, m, y
 }
 
-// Convert an excelTime representation (stored as a floating point number) to a time.Time.
+// timeFromExcelTime provides a function to convert an excelTime
+// representation (stored as a floating point number) to a time.Time.
 func timeFromExcelTime(excelTime float64, date1904 bool) time.Time {
 	var date time.Time
-	var intPart int64 = int64(excelTime)
-	// Excel uses Julian dates prior to March 1st 1900, and
-	// Gregorian thereafter.
-	if intPart <= 61 {
+	wholeDaysPart := int(excelTime)
+	// Excel uses Julian dates prior to March 1st 1900, and Gregorian
+	// thereafter.
+	if wholeDaysPart <= 61 {
 		const OFFSET1900 = 15018.0
 		const OFFSET1904 = 16480.0
+		const MJD0 float64 = 2400000.5
 		var date time.Time
 		if date1904 {
-			date = julianDateToGregorianTime(MJD_0+OFFSET1904, excelTime)
+			date = julianDateToGregorianTime(MJD0, excelTime+OFFSET1904)
 		} else {
-			date = julianDateToGregorianTime(MJD_0+OFFSET1900, excelTime)
+			date = julianDateToGregorianTime(MJD0, excelTime+OFFSET1900)
 		}
 		return date
 	}
-	var floatPart float64 = excelTime - float64(intPart)
-	var dayNanoSeconds float64 = 24 * 60 * 60 * 1000 * 1000 * 1000
+	floatPart := excelTime - float64(wholeDaysPart) + roundEpsilon
 	if date1904 {
-		date = time.Date(1904, 1, 1, 0, 0, 0, 0, time.UTC)
+		date = excel1904Epoc
 	} else {
-		date = time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)
+		date = excel1900Epoc
 	}
-	durationDays := time.Duration(intPart) * time.Hour * 24
-	durationPart := time.Duration(dayNanoSeconds * floatPart)
-	return date.Add(durationDays).Add(durationPart)
+	durationPart := time.Duration(nanosInADay * floatPart)
+	return date.AddDate(0, 0, wholeDaysPart).Add(durationPart).Truncate(time.Second)
 }

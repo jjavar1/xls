@@ -170,9 +170,9 @@ type NumberCol struct {
 
 func (c *NumberCol) String(wb *WorkBook) []string {
 	if fNo := wb.Xfs[c.Index].formatNo(); fNo != 0 {
-		TimeOrigin := time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)
-		t := TimeOrigin.Add(time.Duration(c.Float * float64(24*time.Hour)))
-		// t := timeFromExcelTime(c.Float, wb.dateMode == 1)
+		// TimeOrigin := time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)
+		// t := TimeOrigin.Add(time.Duration(c.Float * float64(24*time.Hour)))
+		t := timeFromExcelTime(c.Float, wb.dateMode == 1)
 		return []string{t.Format("2006-01-02 15:04:05")}
 		//return []string{yymmdd.Format(t, wb.Formats[fNo].str)}
 	}
