@@ -81,8 +81,9 @@ func (xf *XfRk) String(wb *WorkBook) string {
 			if !isFloat {
 				f = float64(i)
 			}
-			t := timeFromExcelTime(f, wb.dateMode == 1)
-			return t.Format(time.RFC3339) //TODO it should be international
+			TimeOrigin := time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)
+			t := TimeOrigin.Add(time.Duration(f * float64(24*time.Hour)))
+			return t.Format("2006-01-02 15:04:05")//TODO it should be international
 		}
 	}
 	return xf.Rk.String()
