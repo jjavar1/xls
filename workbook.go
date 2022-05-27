@@ -282,6 +282,26 @@ func (w *WorkBook) NumSheets() int {
 	return len(w.sheets)
 }
 
+func (w *WorkBook) GetSheetByName(sheetName string) *WorkSheet {
+	for _, sheet := range w.sheets {
+		  if sheet.Name == sheetName {
+			   if !sheet.parsed {
+					w.prepareSheet(sheet)
+			   }
+			   return sheet
+		  }
+	}
+	return nil
+}
+
+func (w *WorkBook) GetFirstSheet() *WorkSheet {
+	sheet := w.sheets[0]
+	if !sheet.parsed {
+		  w.prepareSheet(sheet)
+	}
+	return sheet
+}
+
 //helper function to read all cells from file
 //Notice: the max value is the limit of the max capacity of lines.
 //Warning: the helper function will need big memeory if file is large.
