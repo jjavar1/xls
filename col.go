@@ -218,12 +218,7 @@ type LabelsstCol struct {
 }
 
 func (c *LabelsstCol) String(wb *WorkBook) []string {
-	if (int(c.Sst) <= len(wb.sst)) {
-		return []string{wb.sst[int(c.Sst)]}
-	} else {
-		return []string{""}
-	}
-	
+	return []string{wb.sst[int(c.Sst)]}
 }
 
 type labelCol struct {
