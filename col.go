@@ -4,11 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-	"strings"
-
 	"time"
-
-	yymmdd "github.com/extrame/goyymmdd"
 )
 
 //content type
@@ -53,36 +49,23 @@ func (xf *XfRk) String(wb *WorkBook) string {
 	if len(wb.Xfs) > idx {
 		fNo := wb.Xfs[idx].formatNo()
 		if fNo >= 164 { // user defined format
-			if formatter := wb.Formats[fNo]; formatter != nil {
-				formatterLower := strings.ToLower(formatter.str)
-				if formatterLower == "general" ||
-					strings.Contains(formatter.str, "#") ||
-					strings.Contains(formatter.str, ".00") ||
-					strings.Contains(formatterLower, "m/y") ||
-					strings.Contains(formatterLower, "d/y") ||
-					strings.Contains(formatterLower, "m.y") ||
-					strings.Contains(formatterLower, "d.y") ||
-					strings.Contains(formatterLower, "h:") ||
-					strings.Contains(formatterLower, "д.г") {
-					//If format contains # or .00 then this is a number
-					return xf.Rk.String()
-				} else {
-					i, f, isFloat := xf.Rk.number()
-					if !isFloat {
-						f = float64(i)
-					}
-					t := timeFromExcelTime(f, wb.dateMode == 1)
-					return yymmdd.Format(t, formatter.str)
+			if fmt := wb.Formats[fNo]; fmt != nil {
+				i, f, isFloat := xf.Rk.number()
+				if !isFloat {
+					f = float64(i)
 				}
+				t := timeFromExcelTime(f, wb.dateMode == 1)
+
+				return t.Format(time.RFC3339) //TODO it should be international and format as the describled style
 			}
-			// see http://www.openoffice.org/sc/excelfileformat.pdf Page #174
+			// see http://www.openoffice.org/sc/excelfileformat.pdf
 		} else if 14 <= fNo && fNo <= 17 || fNo == 22 || 27 <= fNo && fNo <= 36 || 50 <= fNo && fNo <= 58 { // jp. date format
 			i, f, isFloat := xf.Rk.number()
 			if !isFloat {
 				f = float64(i)
 			}
 			t := timeFromExcelTime(f, wb.dateMode == 1)
-			return t.Format(time.RFC3339) //TODO it should be international
+			return t.Format("2006.01") //TODO it should be international
 		}
 	}
 	return xf.Rk.String()
@@ -93,18 +76,13 @@ type RK uint32
 func (rk RK) number() (intNum int64, floatNum float64, isFloat bool) {
 	multiplied := rk & 1
 	isInt := rk & 2
-	val := int32(rk) >> 2
+	val := rk >> 2
 	if isInt == 0 {
 		isFloat = true
 		floatNum = math.Float64frombits(uint64(val) << 34)
 		if multiplied != 0 {
 			floatNum = floatNum / 100
 		}
-		return
-	}
-	if multiplied != 0 {
-		isFloat = true
-		floatNum = float64(val) / 100
 		return
 	}
 	return int64(val), 0, false
@@ -168,24 +146,8 @@ type NumberCol struct {
 }
 
 func (c *NumberCol) String(wb *WorkBook) []string {
-	if fNo := wb.Xfs[c.Index].formatNo(); fNo != 0 {
-		t := timeFromExcelTime(c.Float, wb.dateMode == 1)
-		return []string{yymmdd.Format(t, wb.Formats[fNo].str)}
-	}
 	return []string{strconv.FormatFloat(c.Float, 'f', -1, 64)}
 }
-
-type FormulaStringCol struct {
-	Col
-	RenderedValue string
-}
-
-func (c *FormulaStringCol) String(wb *WorkBook) []string {
-	return []string{c.RenderedValue}
-}
-
-//str, err = wb.get_string(buf_item, size)
-//wb.sst[offset_pre] = wb.sst[offset_pre] + str
 
 type FormulaCol struct {
 	Header struct {
