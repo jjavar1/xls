@@ -28,6 +28,27 @@ type WorkBook struct {
 	dateMode       uint16
 }
 
+func (w *WorkBook) GetSheetByName(sheetName string) *WorkSheet {
+	for _, sheet := range w.sheets {
+		  if sheet.Name == sheetName {
+			   if !sheet.parsed {
+					w.prepareSheet(sheet)
+			   }
+			   return sheet
+		  }
+	}
+	return nil
+}
+
+func (w *WorkBook) GetFirstSheet() *WorkSheet {
+	sheet := w.sheets[0]
+	if !sheet.parsed {
+		  w.prepareSheet(sheet)
+	}
+	return sheet
+}
+
+
 //read workbook from ole2 file
 func newWorkBookFromOle2(rs io.ReadSeeker) *WorkBook {
 	wb := new(WorkBook)
@@ -280,26 +301,6 @@ func (w *WorkBook) GetSheet(num int) *WorkSheet {
 //Get the number of all sheets, look into example
 func (w *WorkBook) NumSheets() int {
 	return len(w.sheets)
-}
-
-func (w *WorkBook) GetSheetByName(sheetName string) *WorkSheet {
-	for _, sheet := range w.sheets {
-		  if sheet.Name == sheetName {
-			   if !sheet.parsed {
-					w.prepareSheet(sheet)
-			   }
-			   return sheet
-		  }
-	}
-	return nil
-}
-
-func (w *WorkBook) GetFirstSheet() *WorkSheet {
-	sheet := w.sheets[0]
-	if !sheet.parsed {
-		  w.prepareSheet(sheet)
-	}
-	return sheet
 }
 
 //helper function to read all cells from file
