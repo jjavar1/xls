@@ -14,6 +14,23 @@ type contentHandler interface {
 	LastCol() uint16
 }
 
+
+type FormulaStringCol struct {
+
+	Col
+
+	RenderedValue string
+
+}
+
+
+
+func (c *FormulaStringCol) String(wb *WorkBook) []string {
+
+	return []string{c.RenderedValue}
+
+}
+
 type Col struct {
 	RowB      uint16
 	FirstColB uint16
