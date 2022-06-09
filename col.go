@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-	"time"
 )
+
+const EC_STANDARD_DATE_FORMATE string = "2006-01-02 15:04:05"
 
 //content type
 type contentHandler interface {
@@ -14,21 +15,13 @@ type contentHandler interface {
 	LastCol() uint16
 }
 
-
 type FormulaStringCol struct {
-
 	Col
-
 	RenderedValue string
-
 }
 
-
-
 func (c *FormulaStringCol) String(wb *WorkBook) []string {
-
 	return []string{c.RenderedValue}
-
 }
 
 type Col struct {
@@ -73,7 +66,7 @@ func (xf *XfRk) String(wb *WorkBook) string {
 				}
 				t := timeFromExcelTime(f, wb.dateMode == 1)
 
-				return t.Format(time.RFC3339) //TODO it should be international and format as the describled style
+				return t.Format(EC_STANDARD_DATE_FORMATE)
 			}
 			// see http://www.openoffice.org/sc/excelfileformat.pdf
 		} else if 14 <= fNo && fNo <= 17 || fNo == 22 || 27 <= fNo && fNo <= 36 || 50 <= fNo && fNo <= 58 { // jp. date format
@@ -82,7 +75,7 @@ func (xf *XfRk) String(wb *WorkBook) string {
 				f = float64(i)
 			}
 			t := timeFromExcelTime(f, wb.dateMode == 1)
-			return t.Format("2006.01") //TODO it should be international
+			return t.Format("2006.01")
 		}
 	}
 	return xf.Rk.String()
